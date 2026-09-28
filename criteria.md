@@ -57,6 +57,8 @@ in at least 4 of 5 tries.
 
 ## 4. Something about your chunks
 
+For at least 4 of 5 chunks sampled from my own chunker, the chunk reads as a complete thought no sentence is cut in half at either boundary and no chunk is shorter than 100 characters.
+
 <!-- YOU WRITE THIS ONE.
 
      How would you know if your chunks were the right size? Name something
@@ -73,11 +75,13 @@ in at least 4 of 5 tries.
 
 **Why this target:**
 
-
+The starter's fixed 800 character chunker produced a shortest chunk of only 24 characters clearly a meaningless fragment and cut straight through city_guides labeled sections rather than respecting them. Since these documents are organized by heading, a chunker that respects that structure shouldn't produce anything shorter than roughly one full sentence. 100 characters is about that length, so anything under it is very likely a fragment rather than usable content
 
 ---
 
 ## 5. Your choice
+
+For at least 4 of my 5 test questions, the source document named in the answer is the actual document the answer came from not merely any document that happened to be retrieved.
 
 <!-- YOU WRITE THIS ONE TOO.
 
@@ -91,7 +95,7 @@ in at least 4 of 5 tries.
 
 **Why this target:**
 
-
+Naming a source and naming the correct source aren't the same guarantee an answer could cite a file without the fact actually coming from it. With 9 separate town guides in this corpus, a wrong but plausible sounding town would be an easy failure to miss if I only checked whether a source was present at all, but it's the kind of error that would actually mislead someone using this as a real travel guide.
 
 ---
 
