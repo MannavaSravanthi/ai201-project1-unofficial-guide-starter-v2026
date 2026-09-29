@@ -21,14 +21,14 @@ Sravanthi — city_guides corpus
 
 ## What This Does
 
-This is a retrieval-augmented Q&A system built on the `city_guides` corpus nine town guides plus five cross-cutting guides (accessibility, eating, regional transport, seasons, walking) covering a fictional region. It answers specific factual questions about getting around, where to eat, where to stay, and what to see in each town, pulling answers only from these documents rather than the model's own general knowledge. If a question falls outside what the corpus covers, it refuses rather than guessing.
+This is a retrieval-augmented Q&A system built on the `city_guides` corpus — nine town guides plus five cross-cutting guides (accessibility, eating, regional transport, seasons, walking) covering a fictional region. It answers specific factual questions about getting around, where to eat, where to stay, and what to see in each town, pulling answers only from these documents rather than the model's own general knowledge. If a question falls outside what the corpus covers, it refuses rather than guessing.
 
 ## Chunking Strategy
 
-**Chunk size:**
-**Overlap:**
+**Chunk size:** Not fixed by design — each chunk is one full document section, so size varies naturally with how much the author wrote under that heading (184–762 characters, averaging 323, across 94 chunks)
+**Overlap:** None — since chunks follow section boundaries rather than a character count, there's no repeated text between chunks to create
 
-The starter's fixed 800-character chunker was cutting straight through the labeled sections in these documents (Getting There, Where to Eat, etc.), producing a shortest chunk of just 24 characters a meaningless fragment. Since city_guides documents are already organized by heading, I replaced it with a chunker that splits on each `## ` section heading instead, so every chunk is one complete section. Any intro text before the first heading becomes its own "Overview" chunk instead of getting dropped, and every chunk is prefixed with the document's title so it still identifies which town it's about even when read completely on its own.
+The starter's fixed 800-character chunker was cutting straight through the labeled sections in these documents (Getting There, Where to Eat, etc.), producing a shortest chunk of just 24 characters — a meaningless fragment. Since city_guides documents are already organized by heading, I replaced it with a chunker that splits on each `## ` section heading instead, so every chunk is one complete section. Any intro text before the first heading becomes its own "Overview" chunk instead of getting dropped, and every chunk is prefixed with the document's title so it still identifies which town it's about even when read completely on its own.
 
 After the change: 94 chunks, averaging 323 characters (shortest 184, longest 762) — versus 51 chunks averaging 650 characters (shortest 24, longest 800) with the old fixed-size approach.
 
@@ -91,11 +91,16 @@ June and September for the beach without the crowds. July and August are busy an
 <!-- One complete question and answer, pasted as text, with the source line
      visible. Milestone 4. -->
 
-**Question:**
+**Question:** How often do Marchwood's trams run on weekdays during the day?
 
 **Answer:**
 
 ```
+(best distance 0.262, cutoff 0.5)
+
+Marchwood's trams run every 8 minutes on weekdays (guide_marchwood.md).
+
+Sources retrieved: guide_eating.md, guide_kestrelford.md, guide_marchwood.md
 ```
 
 **My relevance cutoff:**
@@ -111,7 +116,18 @@ June and September for the beach without the crowds. July and August are busy an
 
 | Question | In corpus? | Best distance |
 |---|---|---|
-|  |  |  |
+| How often do Marchwood's trams run on weekdays during the day? | Yes | 0.2437 |
+| Which district in Marchwood has the best restaurants? | Yes | 0.3069 |
+| How many train services run from Brightwater to the regional hub on Sundays? | Yes | 0.3199 |
+| How often does the bus to Kestrelford run on Saturdays? | Yes | 0.3061 |
+| Why is the Halden Bay coastal path sometimes closed? | Yes | 0.3143 |
+| What is the capital of Mongolia? | No | 0.8089 |
+| How do I change the oil in a diesel engine? | No | 0.8881 |
+| Who won the 1994 World Cup? | No | 0.9839 |
+| What is the recommended dosage of ibuprofen for a headache? | No | 0.8350 |
+| How do I write a for loop in Rust? | No | 0.8365 |
+
+My five in-corpus questions all landed between 0.24 and 0.32. My five out-of-scope questions all landed at 0.81 or higher. That left a gap of about half a point (0.32 to 0.81) with nothing in it, so I set `THRESHOLD = 0.5` in `config.py` — roughly centered in that gap, with plenty of room on both sides in case a real question comes in slightly noisier than my test set.
 
 ## How I Used AI
 
@@ -124,9 +140,9 @@ June and September for the beach without the crowds. July and August are busy an
 
      Milestone 5. -->
 
-**1.**
+**1.** I didn't understand what the relevance cutoff (`THRESHOLD` in `config.py`) actually meant or how I was supposed to pick a number for it — I assumed it was something to guess at. I asked AI to explain it, and it clarified that distance is "lower is better" (a close match sits around 0.3, an unrelated one around 0.9), and that the way to set it isn't to guess but to run my own in-corpus questions and my own out-of-scope questions, note the best distance for each, and place the cutoff in the gap between the two groups. I ran all 10 of my test questions this way and found my in-corpus results clustered at 0.24–0.32 while my out-of-scope results clustered at 0.81+, so I set `THRESHOLD = 0.5` — in the middle of that gap — instead of leaving the starter's default of 0.6.
 
-**2.**
+**2.** I pasted my `judge()` function in `scorer.py` and asked AI to check it for syntax errors and whether its time complexity could be reduced. My first version compared `expects` and `answer` directly without lowercasing them, even though the function's own docstring says the match should be case-insensitive — so a correct answer that happened to capitalize a word differently than `expects` (e.g. "Marchwood" vs. "marchwood") would have been marked wrong. AI pointed this out and I added `.strip().lower()` to both sides of the comparison to fix it. On time complexity, it confirmed there wasn't really anything to reduce — a substring containment check (`in`) is already about as efficient as this kind of match gets, so I left that part alone.
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never

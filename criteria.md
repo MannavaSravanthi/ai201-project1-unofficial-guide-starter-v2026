@@ -23,8 +23,8 @@ For at least 4 of my 5 test questions, the retrieved chunks include one that
 contains the answer.
 
 **Why this target:**
-<!-- e.g. "One of my questions is about a topic only two documents mention, so
-     I expect that one to be hard." -->
+
+Four of my five test questions ask for a single fact stated directly in the guide — a frequency or a count (trams every X minutes, six train services, two-hourly buses). Those I'd expect to retrieve reliably since the answer is a specific number sitting in one section. The restaurant question ("which district has the best restaurants") is different — it's closer to a recommendation than a plain fact, so the right chunk might not literally answer the way I phrased the question. That's the one question I'd expect this target to need to absorb, which is why I set 4 of 5 instead of 5 of 5.
 
 ---
 
@@ -33,8 +33,8 @@ contains the answer.
 Every answer the system produces names at least one source document.
 
 **Why this target:**
-<!-- Why all five and not four? What about your setup makes that achievable —
-     or what would have to go wrong for it not to be? -->
+
+My `ask` command's output always includes a "Sources retrieved:" line listing every document handed to the model for that question, regardless of what the generated answer itself says — that's a property of how the pipeline is built, not something the model's output could vary on its own. As long as a question isn't refused outright, a source gets named every time. That's why I set this at 5 of 5 rather than leaving room for a miss.
 
 ---
 
@@ -50,8 +50,8 @@ in at least 4 of 5 tries.
      just keep five of them, or the "4 of 5" above has nothing to be 4 of. -->
 
 **Why this target:**
-<!-- What did your distances look like when you set the cutoff in Milestone 4?
-     Was there a clean gap, or did the two groups overlap? -->
+
+When I measured this in Milestone 4, my five in-corpus questions all landed between 0.24 and 0.32 distance, while my five out-of-scope questions all landed at 0.81 or higher — a gap of roughly half a point with nothing in between. With that much separation, I'd expect the gate to get this right almost every time. I left room for 1 of 5 to miss in case a real question ever comes in phrased ambiguously enough to land in that gap, which none of my ten test questions actually did.
 
 ---
 

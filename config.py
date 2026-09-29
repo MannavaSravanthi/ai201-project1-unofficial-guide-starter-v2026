@@ -26,6 +26,9 @@ CORPUS = os.getenv("AI201_CORPUS", "city_guides")
 # ─── Chunking (Milestone 3) ──────────────────────────────────────────────────
 # These are deliberately plain, generic numbers. Milestone 3 is where you
 # replace them with numbers that fit the documents you actually read.
+# Not used by my chunker — split_documents() splits on section headings
+# instead of a character count, so there's no fixed size or overlap to set.
+# (fallback_split() below still uses these if you ever revert to it.)
 
 CHUNK_SIZE = 800        # characters per chunk
 CHUNK_OVERLAP = 120     # characters shared between neighbouring chunks
@@ -43,7 +46,7 @@ TOP_K = 5               # how many chunks to pull back per question
 # 0.6 is a reasonable starting point, not a right answer. Milestone 4 has you
 # measure your own two groups of distances and put the cutoff in the gap.
 # Most corpora land somewhere between 0.45 and 0.75.
-THRESHOLD = 0.6
+THRESHOLD = 0.5
 
 
 # ─── Models ──────────────────────────────────────────────────────────────────
