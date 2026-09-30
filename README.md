@@ -21,16 +21,16 @@ Sravanthi — city_guides corpus
 
 ## What This Does
 
-This is a retrieval-augmented Q&A system built on the `city_guides` corpus — nine town guides plus five cross-cutting guides (accessibility, eating, regional transport, seasons, walking) covering a fictional region. It answers specific factual questions about getting around, where to eat, where to stay, and what to see in each town, pulling answers only from these documents rather than the model's own general knowledge. If a question falls outside what the corpus covers, it refuses rather than guessing.
+This is a retrieval-augmented Q&A system built on the `city_guides` corpus nine town guides plus five cross-cutting guides (accessibility, eating, regional transport, seasons, walking) covering a fictional region. It answers specific factual questions about getting around, where to eat, where to stay, and what to see in each town, pulling answers only from these documents rather than the model's own general knowledge. If a question falls outside what the corpus covers, it refuses rather than guessing.
 
 ## Chunking Strategy
 
-**Chunk size:** Not fixed by design — each chunk is one full document section, so size varies naturally with how much the author wrote under that heading (184–762 characters, averaging 323, across 94 chunks)
-**Overlap:** None — since chunks follow section boundaries rather than a character count, there's no repeated text between chunks to create
+**Chunk size:** Not fixed by design each chunk is one full document section, so size varies naturally with how much the author wrote under that heading (184–762 characters, averaging 323, across 94 chunks)
+**Overlap:** None, since chunks follow section boundaries rather than a character count, there's no repeated text between chunks to create
 
-The starter's fixed 800-character chunker was cutting straight through the labeled sections in these documents (Getting There, Where to Eat, etc.), producing a shortest chunk of just 24 characters — a meaningless fragment. Since city_guides documents are already organized by heading, I replaced it with a chunker that splits on each `## ` section heading instead, so every chunk is one complete section. Any intro text before the first heading becomes its own "Overview" chunk instead of getting dropped, and every chunk is prefixed with the document's title so it still identifies which town it's about even when read completely on its own.
+The starter's fixed 800-character chunker was cutting straight through the labeled sections in these documents (Getting There, Where to Eat, etc.), producing a shortest chunk of just 24 characters a meaningless fragment. Since city_guides documents are already organized by heading, I replaced it with a chunker that splits on each `## ` section heading instead, so every chunk is one complete section. Any intro text before the first heading becomes its own "Overview" chunk instead of getting dropped, and every chunk is prefixed with the document's title so it still identifies which town it's about even when read completely on its own.
 
-After the change: 94 chunks, averaging 323 characters (shortest 184, longest 762) — versus 51 chunks averaging 650 characters (shortest 24, longest 800) with the old fixed-size approach.
+After the change: 94 chunks, averaging 323 characters (shortest 184, longest 762) — versus 51 chunks averaging 650 characters (shortest 24, longest 800) with the old fixed size approach.
 
 ## Sample Chunks
 
@@ -127,7 +127,7 @@ Sources retrieved: guide_eating.md, guide_kestrelford.md, guide_marchwood.md
 | What is the recommended dosage of ibuprofen for a headache? | No | 0.8350 |
 | How do I write a for loop in Rust? | No | 0.8365 |
 
-My five in-corpus questions all landed between 0.24 and 0.32. My five out-of-scope questions all landed at 0.81 or higher. That left a gap of about half a point (0.32 to 0.81) with nothing in it, so I set `THRESHOLD = 0.5` in `config.py` — roughly centered in that gap, with plenty of room on both sides in case a real question comes in slightly noisier than my test set.
+My five in corpus questions all landed between 0.24 and 0.32. My five out-of-scope questions all landed at 0.81 or higher. That left a gap of about half a point (0.32 to 0.81) with nothing in it, so I set `THRESHOLD = 0.5` in `config.py` roughly centered in that gap, with plenty of room on both sides in case a real question comes in slightly noisier than my test set.
 
 ## How I Used AI
 
@@ -140,9 +140,9 @@ My five in-corpus questions all landed between 0.24 and 0.32. My five out-of-sco
 
      Milestone 5. -->
 
-**1.** I didn't understand what the relevance cutoff (`THRESHOLD` in `config.py`) actually meant or how I was supposed to pick a number for it — I assumed it was something to guess at. I asked AI to explain it, and it clarified that distance is "lower is better" (a close match sits around 0.3, an unrelated one around 0.9), and that the way to set it isn't to guess but to run my own in-corpus questions and my own out-of-scope questions, note the best distance for each, and place the cutoff in the gap between the two groups. I ran all 10 of my test questions this way and found my in-corpus results clustered at 0.24–0.32 while my out-of-scope results clustered at 0.81+, so I set `THRESHOLD = 0.5` — in the middle of that gap — instead of leaving the starter's default of 0.6.
+**1.** I didn't understand what the relevance cutoff (`THRESHOLD` in `config.py`) actually meant or how I was supposed to pick a number for it I assumed it was something to guess at. I asked AI to explain it, and it clarified that distance is "lower is better" (a close match sits around 0.3, an unrelated one around 0.9), and that the way to set it isn't to guess but to run my own in-corpus questions and my own out of scope questions, note the best distance for each, and place the cutoff in the gap between the two groups. I ran all 10 of my test questions this way and found my in-corpus results clustered at 0.24–0.32 while my out-of-scope results clustered at 0.81+, so I set `THRESHOLD = 0.5` in the middle of that gap, instead of leaving the starter's default of 0.6.
 
-**2.** I pasted my `judge()` function in `scorer.py` and asked AI to check it for syntax errors and whether its time complexity could be reduced. My first version compared `expects` and `answer` directly without lowercasing them, even though the function's own docstring says the match should be case-insensitive — so a correct answer that happened to capitalize a word differently than `expects` (e.g. "Marchwood" vs. "marchwood") would have been marked wrong. AI pointed this out and I added `.strip().lower()` to both sides of the comparison to fix it. On time complexity, it confirmed there wasn't really anything to reduce — a substring containment check (`in`) is already about as efficient as this kind of match gets, so I left that part alone.
+**2.** I pasted my `judge()` function in `scorer.py` and asked AI to check it for syntax errors and whether its time complexity could be reduced. My first version compared `expects` and `answer` directly without lowercasing them, even though the function's own docstring says the match should be case insensitive so a correct answer that happened to capitalize a word differently than `expects` (e.g. "Marchwood" vs. "marchwood") would have been marked wrong. AI pointed this out and I added `.strip().lower()` to both sides of the comparison to fix it. On time complexity, it confirmed there wasn't really anything to reduce a substring containment check (`in`) is already about as efficient as this kind of match gets, so I left that part alone.
 
 **3.** After my before run showed the Kestrelford question failing all three runs identically, I asked AI to help me figure out why a 3/3 identical failure felt different from a random miss. It pointed out that my system's actual answer ("every two hours") and my expected phrase ("two-hourly") mean the same thing, and that my scorer's literal substring match doesn't credit synonyms the failure was in the test, not the system. I didn't just take that at face value. I went back to my own `judge()` function in `scorer.py` and confirmed the `in` check really was doing an exact match with no normalization for phrasing. That reframed my whole Milestone 2 and 3 write up around this one finding instead of treating it as a real retrieval problem.
 
@@ -209,7 +209,7 @@ gate refused 5 of 5
 Why is the Halden Bay coastal path sometimes closed? run 1
 The Halden Bay coastal path is closed in high wind because it is exposed and genuinely dangerous (*guide_halden_bay.md* and *guide_walking.md*).
 ```
-Both cited documents are directly about Halden Bay's path conditions. I checked the "Northgate" claim (question 2) directly against `guide_marchwood.md`'s "Eat and drink" section, which states: *"The best eating is in the Northgate district, a 12-minute tram ride from the station, where about thirty restaurants sit within four streets."* — a verified match, not an assumption.
+Both cited documents are directly about Halden Bay's path conditions. I checked the "Northgate" claim (question 2) directly against `guide_marchwood.md`'s "Eat and drink" section, which states: *"The best eating is in the Northgate district, a 12 minute tram ride from the station, where about thirty restaurants sit within four streets."* this is a verified match, not an assumption.
 
 ## Verdicts
 
