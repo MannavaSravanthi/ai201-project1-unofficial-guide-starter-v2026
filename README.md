@@ -248,6 +248,13 @@ Both cited documents are directly about Halden Bay's path conditions. I checked 
 
      Milestone 3. -->
 
+I missed nothing all five criteria held at or above target in every one of the three runs. A clean sweep like this is a real result, but it usually means at least one target was set conservatively rather than the system being flawless everywhere, so here's an honest look at which ones were too loose.
+
+**Criterion 3 (the relevance gate) is the clearest case.** My distances showed a wide, consistent gap: in corpus questions topped out at 0.32, and out of scope questions never came in under 0.81. With separation that large, the gate refusing 4 of 5 out of scope questions was never really in doubt. I set the target at 4/5 to leave room for an ambiguous edge case, but none of my ten test questions actually produced one. I'd tighten this to **5 of 5**.
+
+**Criterion 2 (every answer names a source) is loose for a different reason it isn't measuring much.** My `ask` command appends a "Sources retrieved" line to every non refused answer as a fixed part of its output format, so the source list is guaranteed by the code rather than something the model could fail to produce. Passing this 5/5 tells me almost nothing about whether the system is actually working correctly, only that I didn't break the output template. A more meaningful version of this criterion would check whether the *top ranked* retrieved chunk not just any retrieved chunk is the one the answer cites, which is closer to what criterion 5 already tests.
+
+The criterion I'd actually tighten going forward is criterion 3, from 4 of 5 to 5 of 5, since the real distance gap in my corpus supports a stricter bar than I originally set. 
 ## The Improvement
 
 **What I changed:**

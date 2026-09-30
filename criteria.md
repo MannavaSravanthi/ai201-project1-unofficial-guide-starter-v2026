@@ -24,7 +24,7 @@ contains the answer.
 
 **Why this target:**
 
-Four of my five test questions ask for a single fact stated directly in the guide — a frequency or a count (trams every X minutes, six train services, two-hourly buses). Those I'd expect to retrieve reliably since the answer is a specific number sitting in one section. The restaurant question ("which district has the best restaurants") is different — it's closer to a recommendation than a plain fact, so the right chunk might not literally answer the way I phrased the question. That's the one question I'd expect this target to need to absorb, which is why I set 4 of 5 instead of 5 of 5.
+Four of my five test questions ask for a single fact stated directly in the guide a frequency or a count (trams every X minutes, six train services, two hourly buses). Those I'd expect to retrieve reliably since the answer is a specific number sitting in one section. The restaurant question ("which district has the best restaurants") is different it's closer to a recommendation than a plain fact, so the right chunk might not literally answer the way I phrased the question. That's the one question I'd expect this target to need to absorb, which is why I set 4 of 5 instead of 5 of 5.
 
 ---
 
@@ -34,7 +34,7 @@ Every answer the system produces names at least one source document.
 
 **Why this target:**
 
-My `ask` command's output always includes a "Sources retrieved:" line listing every document handed to the model for that question, regardless of what the generated answer itself says — that's a property of how the pipeline is built, not something the model's output could vary on its own. As long as a question isn't refused outright, a source gets named every time. That's why I set this at 5 of 5 rather than leaving room for a miss.
+My `ask` command's output always includes a "Sources retrieved:" line listing every document handed to the model for that question, regardless of what the generated answer itself says that's a property of how the pipeline is built, not something the model's output could vary on its own. As long as a question isn't refused outright, a source gets named every time. That's why I set this at 5 of 5 rather than leaving room for a miss.
 
 ---
 
@@ -51,7 +51,7 @@ in at least 4 of 5 tries.
 
 **Why this target:**
 
-When I measured this in Milestone 4, my five in-corpus questions all landed between 0.24 and 0.32 distance, while my five out-of-scope questions all landed at 0.81 or higher — a gap of roughly half a point with nothing in between. With that much separation, I'd expect the gate to get this right almost every time. I left room for 1 of 5 to miss in case a real question ever comes in phrased ambiguously enough to land in that gap, which none of my ten test questions actually did.
+When I measured this in Milestone 4, my five incorpus questions all landed between 0.24 and 0.32 distance, while my five out of scope questions all landed at 0.81 or higher a gap of roughly half a point with nothing in between. With that much separation, I'd expect the gate to get this right almost every time. I left room for 1 of 5 to miss in case a real question ever comes in phrased ambiguously enough to land in that gap, which none of my ten test questions actually did.
 
 ---
 
