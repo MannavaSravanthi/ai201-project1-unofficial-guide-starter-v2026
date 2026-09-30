@@ -144,6 +144,8 @@ My five in-corpus questions all landed between 0.24 and 0.32. My five out-of-sco
 
 **2.** I pasted my `judge()` function in `scorer.py` and asked AI to check it for syntax errors and whether its time complexity could be reduced. My first version compared `expects` and `answer` directly without lowercasing them, even though the function's own docstring says the match should be case-insensitive — so a correct answer that happened to capitalize a word differently than `expects` (e.g. "Marchwood" vs. "marchwood") would have been marked wrong. AI pointed this out and I added `.strip().lower()` to both sides of the comparison to fix it. On time complexity, it confirmed there wasn't really anything to reduce — a substring containment check (`in`) is already about as efficient as this kind of match gets, so I left that part alone.
 
+**3.** After my before run showed the Kestrelford question failing all three runs identically, I asked AI to help me figure out why a 3/3 identical failure felt different from a random miss. It pointed out that my system's actual answer ("every two hours") and my expected phrase ("two-hourly") mean the same thing, and that my scorer's literal substring match doesn't credit synonyms the failure was in the test, not the system. I didn't just take that at face value. I went back to my own `judge()` function in `scorer.py` and confirmed the `in` check really was doing an exact match with no normalization for phrasing. That reframed my whole Milestone 2 and 3 write up around this one finding instead of treating it as a real retrieval problem.
+
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never
      claims earns nothing.
@@ -177,7 +179,7 @@ Marchwood's trams run every 8 minutes on weekdays (guide_marchwood.md).
 ```
 expects: "8" found and pass
 
-Question 4 (the Kestrelford bus question) failed all three runs but not because the system got it wrong. Every run answered "every two hours," which means the same thing as my expected phrase "two hourly." My scorer does a literal substring match, so a correct answer worded differently than `expects` reads as a miss. The target is still met at 4/5 in every run, but this is worth carrying into Milestone 2 and 3 rather than ignoring.
+Question 4 (the Kestrelford bus question) failed all three runs but not because the system got it wrong. Every run answered "every two hours," which means the same thing as my expected phrase "two-hourly." My scorer does a literal substring match, so a correct answer worded differently than `expects` reads as a miss. The target is still met at 4/5 in every run, but this is worth carrying into Milestone 2 and 3 rather than ignoring.
 
 **Criterion 2** — produced by `run_eval.py::main`
 
@@ -257,25 +259,21 @@ I missed nothing all five criteria held at or above target in every one of the t
 The criterion I'd actually tighten going forward is criterion 3, from 4 of 5 to 5 of 5, since the real distance gap in my corpus supports a stricter bar than I originally set. 
 ## The Improvement
 
-**What I changed:**
+**What I changed:** Raised `THRESHOLD` in `config.py` from 0.5 to 0.4, tightening the relevance gate.
 
-**Why I picked it:**
-
-<!-- Connect it to a specific diagnosis above in one sentence. If you can't,
-     you picked a fix because it sounded impressive. -->
+**Why I picked it:** My Milestone 3 diagnosis pointed directly at criterion 3 the gate's target (4 of 5) had more margin than my actual distance data supported, since my in corpus questions never exceeded 0.32 and my out of scope questions never fell below 0.81. Tightening the cutoff was the most direct way to test whether the gate could hold up to a stricter bar.
 
 ### Run Log — After
 
-<!-- Same format, same five criteria, three runs each.
-     `python run_eval.py --label after` -->
+Produced by `run_eval.py::main` / `run_eval.py::check_out_of_scope`, from `results/run_2026-09-29_2337_after.md`. Same corpus, same top-k, `THRESHOLD` changed from 0.5 to 0.4.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 4/5 | 4/5 | 4/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Gate stops out of corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Sampled chunks read as a complete thought, ≥100 characters | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Cited source is the actual source the answer came from | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
 
 **Did it help?**
 
@@ -285,6 +283,10 @@ The criterion I'd actually tighten going forward is criterion 3, from 4 of 5 to 
      tell.
 
      Milestone 4. -->
+
+No the results are identical to "before," down to the exact same distances for every question, confirmed across two separate "after" runs. Tightening `THRESHOLD` from 0.5 to 0.4 made no measurable difference on this test set, and looking at the actual numbers explains why: my in corpus questions never went above 0.3199, and my out of scope questions never went below 0.8089. Both my old cutoff (0.5) and my new one (0.4) sit inside that same half point gap with nothing in it, so neither threshold could possibly change which questions pass or fail I'd have needed to move the cutoff all the way up past 0.81, or below 0.32, to see any actual change in behavior.
+
+This is still a useful result. It confirms my Milestone 3 diagnosis was right for the wrong reason I said the gate's target was too loose because the *target number* (4 of 5) had room above it, but the gate's actual *cutoff value* also has enormous room on both sides. The real lesson isn't "tighten the cutoff," it's that this particular improvement can't be tested meaningfully with only 10 fixed test questions that all fall so cleanly on one side or the other. A more revealing change would need to add genuinely ambiguous test questions ones I'd expect to land near the middle of the gap rather than adjusting a number that has no fixed points nearby to move past.
 
 ## What's Still Broken
 
@@ -296,9 +298,19 @@ The criterion I'd actually tighten going forward is criterion 3, from 4 of 5 to 
 
      Milestone 5. -->
 
+Nothing missed a target in either run all five criteria stayed MET before and after. But two things are still imperfect enough to name honestly rather than pretend are fully solved:
+
+**Criterion 1's Kestrelford question is still a false negative, every time.** The system answers "every two hours," which is correct and means the same thing as my expected phrase "two-hourly," but my scorer's literal substring match doesn't credit it. I didn't fix this in this unit because the one change rule meant my improvement had to be the gate tuning I chose and rewriting `expects` after seeing it fail would be exactly the "loosen what you missed" trap the instructions warn against. I'm leaving it as a known, understood gap rather than a test I actually trust completely.
+
+**Criterion 2 still isn't testing anything meaningful.** As I found in Milestone 3, the "Sources retrieved" line is guaranteed by my code's output format regardless of whether the answer is any good, so this criterion can't actually fail. I didn't rewrite it this unit because doing so would mean changing something other than my one chosen improvement, which the rules don't allow.
+
 ## What I'd Do Differently
 
 <!-- Knowing what you know now — which of your five criteria would you write
      differently, and why?
 
      Milestone 5. -->
+
+I'd write **criterion 2** differently next time. Instead of "every answer names a source" which my code guarantees structurally and literally cannot fail I'd write something closer to what criterion 5 already tests "for at least 4 of 5 questions, the top ranked retrieved chunk is the one the answer cites." That would actually measure ranking quality instead of a fixed output habit.
+
+I'd also write **criterion 3** differently, not by changing the "4 of 5" number itself, but by pairing it with something about margin, since my Milestone 4 improvement showed that tightening the cutoff couldn't be tested meaningfully against my existing ten questions (both my old and new cutoff sat inside the same gap with nothing between them). A criterion like "and the gap between my in corpus and out of scope distances should be at least 0.3" would tell me something new as I add test questions later, instead of a pass/fail number that stopped being informative the moment I confirmed the gap once.
